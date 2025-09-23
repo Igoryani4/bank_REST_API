@@ -4,25 +4,31 @@ import com.example.bankcards.dto.UserRegistrationDto;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.UserService;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     @Transactional
     public User createUser(User user) {
         try {
-            // Проверка уникальности username и email
             if (userRepository.existsByUsername(user.getUsername())) {
                 throw new RuntimeException("Username already exists: " + user.getUsername());
             }
@@ -30,6 +36,9 @@ public class UserServiceImpl implements UserService {
             if (userRepository.existsByEmail(user.getEmail())) {
                 throw new RuntimeException("Email already exists: " + user.getEmail());
             }
+
+            // Шифруем пароль перед сохранением
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
 
             User savedUser = userRepository.save(user);
             log.info("Created user: {}", user.getUsername());

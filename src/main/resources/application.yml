@@ -22,11 +22,11 @@ spring:
             non_contextual_creation: true
     show-sql: true
   
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          secret-key: mySecretKeyForJWTGenerationWhichIsVeryLongAndSecure123!
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: mySecretKeyForJWTGenerationWhichIsVeryLongAndSecure123!
 
 springdoc:
   api-docs:
