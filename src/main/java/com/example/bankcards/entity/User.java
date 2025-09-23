@@ -82,4 +82,22 @@ public class User {
     public enum UserStatus {
         ACTIVE, INACTIVE, BLOCKED
     }
+
+    // Добавляем методы для работы с ролями
+    public void addRole(String role) {
+        if (this.roles == null) {
+            this.roles = new ArrayList<>();
+        }
+        this.roles.add(role);
+    }
+
+    public void removeRole(String role) {
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
+    }
+
+    public boolean hasRole(String role) {
+        return this.roles != null && this.roles.contains(role);
+    }
 }

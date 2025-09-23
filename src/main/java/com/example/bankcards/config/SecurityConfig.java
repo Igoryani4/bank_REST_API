@@ -26,6 +26,7 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthEntryPoint unauthorizedHandler;
+    private final JwtAuthTokenFilter authTokenFilter;
 
     @Bean
     public JwtAuthTokenFilter authenticationJwtTokenFilter() {
@@ -56,14 +57,24 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Публичные endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // endpoints требующие аутентификации
+                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/users").hasRole("ADMIN") // Только админы могут видеть всех пользователей
+                        .requestMatchers("/api/accounts/**").authenticated()
+                        .requestMatchers("/api/transactions/**").authenticated()
+                        .requestMatchers("/api/cards/**").authenticated()
+
+                        // Все остальное требует аутентификации
                         .anyRequest().authenticated()
                 );
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
