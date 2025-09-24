@@ -1,5 +1,6 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.dto.UserRegistrationDto;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.service.UserService;
@@ -29,9 +30,17 @@ public class UserController {
         return ResponseEntity.ok(createdUser);
     }
 
+    // Оставить старый метод для совместимости
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    // НОВЫЙ метод с картами и счетами
+    @GetMapping("/{id}/with-cards")
+    public ResponseEntity<UserDto> getUserWithCards(@PathVariable Long id) {
+        UserDto user = userService.getUserWithCards(id);
         return ResponseEntity.ok(user);
     }
 
@@ -47,9 +56,17 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    // Оставить старый метод для совместимости
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    // НОВЫЙ метод с картами и счетами
+    @GetMapping("/with-cards")
+    public ResponseEntity<List<UserDto>> getAllUsersWithCards() {
+        List<UserDto> users = userService.getAllUsersWithCards();
         return ResponseEntity.ok(users);
     }
 

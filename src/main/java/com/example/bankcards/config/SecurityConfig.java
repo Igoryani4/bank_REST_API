@@ -3,6 +3,7 @@ package com.example.bankcards.config;
 import com.example.bankcards.security.JwtAuthEntryPoint;
 import com.example.bankcards.security.JwtAuthTokenFilter;
 import com.example.bankcards.service.UserDetailsServiceImpl;
+import com.example.bankcards.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,11 +27,11 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthEntryPoint unauthorizedHandler;
-    private final JwtAuthTokenFilter authTokenFilter;
+    private final JwtUtils jwtUtils;
 
     @Bean
-    public JwtAuthTokenFilter authenticationJwtTokenFilter() {
-        return new JwtAuthTokenFilter();
+    public JwtAuthTokenFilter authenticationJwtTokenFilter(JwtUtils jwtUtils) {
+        return new JwtAuthTokenFilter(jwtUtils, userDetailsService);
     }
 
     @Bean
@@ -64,7 +65,7 @@ public class SecurityConfig {
 
                         // endpoints требующие аутентификации
                         .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users").hasRole("ADMIN") // Только админы могут видеть всех пользователей
+                        .requestMatchers("/api/users").hasRole("ADMIN")
                         .requestMatchers("/api/accounts/**").authenticated()
                         .requestMatchers("/api/transactions/**").authenticated()
                         .requestMatchers("/api/cards/**").authenticated()
@@ -74,7 +75,8 @@ public class SecurityConfig {
                 );
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.addFilterBefore(authenticationJwtTokenFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

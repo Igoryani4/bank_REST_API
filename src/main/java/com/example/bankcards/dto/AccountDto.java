@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Data
@@ -18,5 +19,6 @@ public class AccountDto {
     private LocalDateTime createdAt;
     private Long userId;
     private String userFullName;
+    private List<CardDto> cards;
 
 }

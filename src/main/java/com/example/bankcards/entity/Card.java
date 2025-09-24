@@ -1,5 +1,7 @@
 package com.example.bankcards.entity;
 
+import com.example.bankcards.service.EncryptionService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,14 +23,14 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String cardNumber;
+    @Column(name = "encrypted_card_number", unique = true, nullable = false)
+    private String encryptedCardNumber;
 
     @Column(name = "expiry_date", nullable = false)
     private LocalDate expiryDate;
 
-    @Column(nullable = false)
-    private String cvv;
+    @Column(name = "encrypted_cvv", nullable = false)
+    private String encryptedCvv;
 
     @Column(name = "card_holder_name", nullable = false)
     private String cardHolderName;
@@ -51,6 +53,69 @@ public class Card {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
+    @Transient
+    @JsonIgnore
+    private transient String decryptedCardNumber;
+
+    @Transient
+    @JsonIgnore
+    private transient String decryptedCvv;
+
+    @Transient
+    @JsonIgnore
+    private static EncryptionService encryptionService;
+
+    // Статический метод для инъекции сервиса
+    public static void setEncryptionService(EncryptionService service) {
+        encryptionService = service;
+    }
+
+    public String getMaskedCardNumber() {
+        try {
+            String decrypted = getCardNumber(); // пробуем получить полный номер
+            if (decrypted == null || decrypted.length() < 4) {
+                return "**** **** **** ****";
+            }
+            // Маскируем: оставляем только последние 4 цифры
+            String lastFour = decrypted.substring(decrypted.length() - 4);
+            return "**** **** **** " + lastFour;
+        } catch (Exception e) {
+            // Если дешифровка не удалась, возвращаем полную маску
+            return "**** **** **** ****";
+        }
+    }
+
+    public String getCardNumber() {
+        if (encryptedCardNumber == null) return null;
+        try {
+            return encryptionService.decrypt(encryptedCardNumber);
+        } catch (Exception e) {
+//            log.error("Failed to decrypt card number for card id: {}", id, e);
+            return null;
+        }
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.decryptedCardNumber = cardNumber;
+        if (encryptionService != null && cardNumber != null) {
+            this.encryptedCardNumber = encryptionService.encrypt(cardNumber);
+        }
+    }
+
+    public String getCvv() {
+        if (decryptedCvv == null && encryptedCvv != null && encryptionService != null) {
+            decryptedCvv = encryptionService.decrypt(encryptedCvv);
+        }
+        return decryptedCvv;
+    }
+
+    public void setCvv(String cvv) {
+        this.decryptedCvv = cvv;
+        if (encryptionService != null && cvv != null) {
+            this.encryptedCvv = encryptionService.encrypt(cvv);
+        }
+    }
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -58,6 +123,13 @@ public class Card {
         }
         if (status == null) {
             status = CardStatus.ACTIVE;
+        }
+        // Шифруем данные перед сохранением
+        if (decryptedCardNumber != null) {
+            setCardNumber(decryptedCardNumber);
+        }
+        if (decryptedCvv != null) {
+            setCvv(decryptedCvv);
         }
     }
 

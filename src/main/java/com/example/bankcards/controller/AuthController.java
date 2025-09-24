@@ -54,9 +54,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<User> registerUser(@Valid @RequestBody UserRegistrationDto signUpRequest) {
-        // Шифруем пароль перед сохранением
-        signUpRequest.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+
         User user = userService.registerUser(signUpRequest);
+
         return ResponseEntity.ok(user);
     }
 }

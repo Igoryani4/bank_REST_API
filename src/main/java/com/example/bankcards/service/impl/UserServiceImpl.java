@@ -1,10 +1,16 @@
 package com.example.bankcards.service.impl;
 
+import com.example.bankcards.dto.AccountDto;
+import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.dto.UserRegistrationDto;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.repository.AccountRepository;
+import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
+import com.example.bankcards.service.AccountService;
+import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.UserService;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,18 +18,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final AccountRepository accountRepository;
+    private final CardRepository cardRepository;
+    private final CardService cardService;
+    private final AccountService accountService;
+
+
+
 
     @Override
     @Transactional
@@ -37,7 +48,10 @@ public class UserServiceImpl implements UserService {
                 throw new RuntimeException("Email already exists: " + user.getEmail());
             }
 
-            // Шифруем пароль перед сохранением
+            if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                user.setRoles(List.of("ROLE_USER")); // Добавляем роль по умолчанию
+            }
+
             user.setPassword(passwordEncoder.encode(user.getPassword()));
 
             User savedUser = userRepository.save(user);
@@ -70,6 +84,86 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserDto getUserWithCards(Long userId) {
+        User user = userRepository.findByIdWithAccountsAndCards(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        return convertToDto(user); // используем обновленный метод
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<UserDto> getAllUsersWithCards() {
+        List<User> users = userRepository.findAllWithAccountsAndCards();
+        return users.stream()
+                .map(this::convertToDto) // используем обновленный метод
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserDto convertToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setStatus(user.getStatus());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setRoles(user.getRoles());
+
+        // Конвертируем счета с картами
+        if (user.getAccounts() != null) {
+            dto.setAccounts(user.getAccounts().stream()
+                    .map(account -> {
+                        AccountDto accountDto = accountService.convertToDto(account);
+                        // Загружаем карты для счета
+                        List<CardDto> cards = cardService.getAccountCards(account.getId());
+                        accountDto.setCards(cards);
+                        return accountDto;
+                    })
+                    .collect(Collectors.toList()));
+        }
+
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserDto getUserDtoById(Long id) {
+        User user = getUserById(id);
+        return convertToDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<UserDto> getAllUserDtos() {
+        List<User> users = getAllUsers();
+        return users.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private UserDto convertToDtoWithCards(User user) {
+        UserDto dto = convertToDto(user); // базовый метод
+
+        // Добавляем карты к каждому счету
+        dto.setAccounts(user.getAccounts().stream()
+                .map(account -> {
+                    AccountDto accountDto = accountService.convertToDto(account);
+                    // Загружаем карты для счета
+                    List<CardDto> cards = cardService.getAccountCards(account.getId());
+                    accountDto.setCards(cards);
+                    return accountDto;
+                })
+                .collect(Collectors.toList()));
+
+        return dto;
     }
 
     @Override

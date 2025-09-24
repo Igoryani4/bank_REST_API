@@ -1,23 +1,24 @@
 package com.example.bankcards.security;
 
 import com.example.bankcards.entity.User;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Data
+@Getter
 public class UserPrincipal implements UserDetails {
-    private Long id;
-    private String username;
-    private String email;
-    private String password;
-    private Collection<? extends GrantedAuthority> authorities;
+    private final Long id;
+    private final String username;
+    private final String email;
+    @JsonIgnore
+    private final String password;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(Long id, String username, String email, String password,
                          Collection<? extends GrantedAuthority> authorities) {
@@ -32,11 +33,6 @@ public class UserPrincipal implements UserDetails {
         List<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role))
                 .collect(Collectors.toList());
-
-        // Если нет ролей, добавляем USER по умолчанию
-        if (authorities.isEmpty()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
 
         return new UserPrincipal(
                 user.getId(),
@@ -80,13 +76,5 @@ public class UserPrincipal implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
     }
 }

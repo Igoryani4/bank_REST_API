@@ -12,21 +12,22 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        jdbc:
-          lob:
-            non_contextual_creation: true
     show-sql: true
-  
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          secret-key: mySecretKeyForJWTGenerationWhichIsVeryLongAndSecure123!
+  liquibase:
+    change-log: classpath:/db/db.changelog-master.yaml
+    enabled: true
+
+app:
+  encryption:
+    key: "mySuperSecretKeyThatIsLongEnough"
+  jwt:
+    secret: mySecretKeyForJWTGenerationWhichIsVeryLongAndSecure123!
+    expiration: 86400000 # 24 hours
 
 springdoc:
   api-docs:
@@ -39,10 +40,8 @@ springdoc:
 logging:
   level:
     com.bank: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    liquibase: info
+#    org.springframework.security: DEBUG
+#    org.springframework.jdbc.datasource.init: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-app:
-  jwt:
-    secret: mySecretKeyForJWTGenerationWhichIsVeryLongAndSecure123!
-    expiration: 86400000 # 24 hours

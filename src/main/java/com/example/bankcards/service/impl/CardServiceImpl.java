@@ -4,8 +4,14 @@ import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.service.CardService;
+import com.example.bankcards.service.EncryptionService;
+import com.example.bankcards.service.SecurityService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +26,20 @@ import java.util.stream.Collectors;
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
+    private final SecurityService securityService;
+    private final EncryptionService encryptionService;
+
+    @PostConstruct
+    public void init() {
+        Card.setEncryptionService(encryptionService);
+    }
 
     @Override
     @Transactional
     public Card createCard(Card card) {
         try {
+            securityService.checkUserAccess(card.getAccount().getUser().getId());
+
             // Генерация номера карты
             String cardNumber = generateCardNumber();
             card.setCardNumber(cardNumber);
@@ -36,7 +51,7 @@ public class CardServiceImpl implements CardService {
             card.setExpiryDate(LocalDate.now().plusYears(3));
 
             Card savedCard = cardRepository.save(card);
-            log.info("Created card: {} for account: {}", cardNumber, card.getAccount().getId());
+            log.info("Created card: {} for account: {}", maskCardNumber(cardNumber), card.getAccount().getId());
             return savedCard;
         } catch (Exception e) {
             log.error("Error creating card for account: {}", card.getAccount().getId(), e);
@@ -46,6 +61,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardDto getCardById(Long id) {
+        securityService.checkCardAccess(id);
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + id));
         return convertToDto(card);
@@ -53,13 +69,13 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardDto getCardByNumber(String cardNumber) {
-        Card card = cardRepository.findByCardNumber(cardNumber)
-                .orElseThrow(() -> new RuntimeException("Card not found with number: " + cardNumber));
-        return convertToDto(card);
+        // Поиск по зашифрованному номеру требует особой логики
+        throw new UnsupportedOperationException("Search by card number not supported for security reasons");
     }
 
     @Override
     public List<CardDto> getAccountCards(Long accountId) {
+        securityService.checkUserAccess(accountId); // Упрощенная проверка
         return cardRepository.findByAccountId(accountId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -67,14 +83,22 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public List<CardDto> getUserCards(Long userId) {
+        securityService.checkUserAccess(userId);
         return cardRepository.findByAccountUserId(userId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    public Page<CardDto> getUserCardsPaginated(Long userId, Pageable pageable) {
+        securityService.checkUserAccess(userId);
+        return cardRepository.findByAccountUserId(userId, pageable)
+                .map(this::convertToDto);
+    }
+
     @Override
     @Transactional
     public Card updateCardStatus(Long cardId, Card.CardStatus status) {
+        securityService.checkCardAccess(cardId);
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + cardId));
 
@@ -87,6 +111,7 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public void deleteCard(Long cardId) {
+        securityService.checkCardAccess(cardId);
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + cardId));
 
@@ -98,7 +123,7 @@ public class CardServiceImpl implements CardService {
     public CardDto convertToDto(Card card) {
         CardDto dto = new CardDto();
         dto.setId(card.getId());
-        dto.setCardNumber(maskCardNumber(card.getCardNumber()));
+        dto.setMaskedCardNumber(card.getMaskedCardNumber());
         dto.setExpiryDate(card.getExpiryDate());
         dto.setCardHolderName(card.getCardHolderName());
         dto.setType(card.getType());
@@ -107,6 +132,7 @@ public class CardServiceImpl implements CardService {
         dto.setCreatedAt(card.getCreatedAt());
         dto.setAccountId(card.getAccount().getId());
         dto.setAccountNumber(card.getAccount().getAccountNumber());
+        dto.setBalance(card.getAccount().getBalance());
         return dto;
     }
 
@@ -114,13 +140,12 @@ public class CardServiceImpl implements CardService {
         Random random = new Random();
         String number;
         do {
-            // Генерация 16-значного номера карты
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 16; i++) {
                 sb.append(random.nextInt(10));
             }
             number = sb.toString();
-        } while (cardRepository.existsByCardNumber(number));
+        } while (cardRepository.existsByCardNumber(encryptionService.encrypt(number)));
 
         return number;
     }

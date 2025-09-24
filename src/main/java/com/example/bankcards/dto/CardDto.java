@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class CardDto {
     private Long id;
-    private String cardNumber;
+    private String maskedCardNumber;
     private LocalDate expiryDate;
     private String cardHolderName;
     private Card.CardType type;
@@ -19,4 +19,5 @@ public class CardDto {
     private LocalDateTime createdAt;
     private Long accountId;
     private String accountNumber;
+    private BigDecimal balance;
 }

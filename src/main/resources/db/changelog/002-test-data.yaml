@@ -1,0 +1,536 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_USER
+              - column:
+                  name: description
+                  value: Обычный пользователь
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_ADMIN
+              - column:
+                  name: description
+                  value: Администратор системы
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_MODERATOR
+              - column:
+                  name: description
+                  value: Модератор
+
+  - changeSet:
+      id: 2
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: email
+                  value: admin@bank.com
+              - column:
+                  name: password
+                  value: $2a$12$mgwMFl5FN4wjY5kuNLCzuOKLJLsoG27Z4s51fmf3ZYFCxjG2EuxVq
+              - column:
+                  name: first_name
+                  value: Администратор
+              - column:
+                  name: last_name
+                  value: Системы
+              - column:
+                  name: phone_number
+                  value: +79160000001
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: created_at
+                  value: now()
+              - column:
+                  name: updated_at
+                  value: now()
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: ivanov
+              - column:
+                  name: email
+                  value: ivanov@example.com
+              - column:
+                  name: password
+                  value: $2a$12$mgwMFl5FN4wjY5kuNLCzuOKLJLsoG27Z4s51fmf3ZYFCxjG2EuxVq
+              - column:
+                  name: first_name
+                  value: Иван
+              - column:
+                  name: last_name
+                  value: Иванов
+              - column:
+                  name: phone_number
+                  value: +79161234567
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: created_at
+                  value: now()
+              - column:
+                  name: updated_at
+                  value: now()
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: petrova
+              - column:
+                  name: email
+                  value: petrova@example.com
+              - column:
+                  name: password
+                  value: $2a$12$mgwMFl5FN4wjY5kuNLCzuOKLJLsoG27Z4s51fmf3ZYFCxjG2EuxVq
+              - column:
+                  name: first_name
+                  value: Мария
+              - column:
+                  name: last_name
+                  value: Петрова
+              - column:
+                  name: phone_number
+                  value: +79167654321
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: created_at
+                  value: now()
+              - column:
+                  name: updated_at
+                  value: now()
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: sidorov
+              - column:
+                  name: email
+                  value: sidorov@example.com
+              - column:
+                  name: password
+                  value: $2a$12$mgwMFl5FN4wjY5kuNLCzuOKLJLsoG27Z4s51fmf3ZYFCxjG2EuxVq
+              - column:
+                  name: first_name
+                  value: Алексей
+              - column:
+                  name: last_name
+                  value: Сидоров
+              - column:
+                  name: phone_number
+                  value: +79165554433
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: created_at
+                  value: now()
+              - column:
+                  name: updated_at
+                  value: now()
+
+  - changeSet:
+      id: 3
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: role
+                  value: ROLE_ADMIN
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: role
+                  value: ROLE_USER
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 2
+              - column:
+                  name: role
+                  value: ROLE_USER
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 3
+              - column:
+                  name: role
+                  value: ROLE_USER
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 4
+              - column:
+                  name: role
+                  value: ROLE_USER
+
+  - changeSet:
+      id: 4
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: account_number
+                  value: 40817810000000000001
+              - column:
+                  name: balance
+                  valueNumeric: 100000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: CURRENT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: account_number
+                  value: 40817810000000000002
+              - column:
+                  name: balance
+                  valueNumeric: 50000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: CURRENT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: user_id
+                  valueNumeric: 2
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: account_number
+                  value: 40817810000000000003
+              - column:
+                  name: balance
+                  valueNumeric: 75000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: SAVINGS
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: user_id
+                  valueNumeric: 3
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: account_number
+                  value: 40817810000000000004
+              - column:
+                  name: balance
+                  valueNumeric: 25000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: CURRENT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: user_id
+                  valueNumeric: 4
+              - column:
+                  name: created_at
+                  value: now()
+
+  - changeSet:
+      id: 5
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: cards
+            columns:
+              - column:
+                  name: encrypted_card_number
+                  value: "FCHG6QFrP3w/aiGbPRJlSmjs43+qveMg4WYBdSIAbx4I4VZCOaqZOcOud433NWBm"
+              - column:
+                  name: expiry_date
+                  valueComputed: CURRENT_DATE + INTERVAL '3 years'
+              - column:
+                  name: encrypted_cvv
+                  value: "U2FsdGVkX1+9pQZ6hRkLmN3oP7sT2wVxY8zCbA1fE="
+              - column:
+                  name: card_holder_name
+                  value: ADMIN SYSTEM
+              - column:
+                  name: type
+                  value: DEBIT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: daily_limit
+                  valueNumeric: 100000.00
+              - column:
+                  name: account_id
+                  valueNumeric: 1
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: cards
+            columns:
+              - column:
+                  name: encrypted_card_number
+                  value: "RoINx5XKOvzOBAtlWrhfaEBUW5qA/KVNObM7ufW6yzjHsEhQlvuC3YlQHjV/qYcR"
+              - column:
+                  name: expiry_date
+                  valueComputed: CURRENT_DATE + INTERVAL '3 years'
+              - column:
+                  name: encrypted_cvv
+                  value: "U2FsdGVkX1+5tRkL9dQfT3wXyZ6nB2vC7hM4qA1sE="
+              - column:
+                  name: card_holder_name
+                  value: IVAN IVANOV
+              - column:
+                  name: type
+                  value: DEBIT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: daily_limit
+                  valueNumeric: 50000.00
+              - column:
+                  name: account_id
+                  valueNumeric: 2
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: cards
+            columns:
+              - column:
+                  name: encrypted_card_number
+                  value: "ZSo/J4r+0OGka1lo96QQ0rzVIgwjbQurece84E3FAOWXZVoytgHzlSy1vAsQ1ScT"
+              - column:
+                  name: expiry_date
+                  valueComputed: CURRENT_DATE + INTERVAL '3 years'
+              - column:
+                  name: encrypted_cvv
+                  value: "U2FsdGVkX1+8tRkL9dQfT3wXyZ6nB2vC7hM4qA1sE="
+              - column:
+                  name: card_holder_name
+                  value: MARIA PETROVA
+              - column:
+                  name: type
+                  value: CREDIT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: daily_limit
+                  valueNumeric: 100000.00
+              - column:
+                  name: account_id
+                  valueNumeric: 3
+              - column:
+                  name: created_at
+                  value: now()
+
+        - insert:
+            tableName: cards
+            columns:
+              - column:
+                  name: encrypted_card_number
+                  value: "aMcaAQDHj7YNSSpCW11KyRFtBKJty762WooYOHSoIqEToupHz40tFvVYeFUYc3Si"
+              - column:
+                  name: expiry_date
+                  valueComputed: CURRENT_DATE + INTERVAL '3 years'
+              - column:
+                  name: encrypted_cvv
+                  value: "U2FsdGVkX1+9pQZ6hRkLmN3oP7sT2wVxY8zCbA1fE="
+              - column:
+                  name: card_holder_name
+                  value: ALEXEY SIDOROV
+              - column:
+                  name: type
+                  value: DEBIT
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: daily_limit
+                  valueNumeric: 25000.00
+              - column:
+                  name: account_id
+                  valueNumeric: 4
+              - column:
+                  name: created_at
+                  value: now()
+
+  - changeSet:
+      id: 6
+      author: igoryani4
+      changes:
+        - insert:
+            tableName: transactions
+            columns:
+              - column:
+                  name: transaction_id
+                  value: TXN001
+              - column:
+                  name: amount
+                  valueNumeric: 5000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: TRANSFER
+              - column:
+                  name: status
+                  value: COMPLETED
+              - column:
+                  name: description
+                  value: Перевод между счетами
+              - column:
+                  name: from_account_id
+                  valueNumeric: 1
+              - column:
+                  name: to_account_id
+                  valueNumeric: 2
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_DATE + INTERVAL '2 day'
+
+        - insert:
+            tableName: transactions
+            columns:
+              - column:
+                  name: transaction_id
+                  value: TXN002
+              - column:
+                  name: amount
+                  valueNumeric: 3000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: TRANSFER
+              - column:
+                  name: status
+                  value: COMPLETED
+              - column:
+                  name: description
+                  value: Оплата услуг
+              - column:
+                  name: from_account_id
+                  valueNumeric: 2
+              - column:
+                  name: to_account_id
+                  valueNumeric: 3
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_DATE + INTERVAL '1 day'
+
+        - insert:
+            tableName: transactions
+            columns:
+              - column:
+                  name: transaction_id
+                  value: TXN003
+              - column:
+                  name: amount
+                  valueNumeric: 10000.00
+              - column:
+                  name: currency
+                  value: RUB
+              - column:
+                  name: type
+                  value: DEPOSIT
+              - column:
+                  name: status
+                  value: COMPLETED
+              - column:
+                  name: description
+                  value: Пополнение счета
+              - column:
+                  name: to_account_id
+                  valueNumeric: 4
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_DATE + INTERVAL '5 hours'

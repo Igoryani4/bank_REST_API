@@ -3,8 +3,11 @@ package com.example.bankcards.controller;
 import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.service.CardService;
+import com.example.bankcards.service.SecurityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +19,7 @@ import java.util.List;
 public class CardController {
 
     private final CardService cardService;
+    private final SecurityService securityService;
 
     @PostMapping
     public ResponseEntity<CardDto> createCard(@Valid @RequestBody Card card) {
@@ -29,20 +33,25 @@ public class CardController {
         return ResponseEntity.ok(card);
     }
 
-    @GetMapping("/number/{cardNumber}")
-    public ResponseEntity<CardDto> getCardByNumber(@PathVariable String cardNumber) {
-        CardDto card = cardService.getCardByNumber(cardNumber);
-        return ResponseEntity.ok(card);
+    @GetMapping("/my-cards")
+    public ResponseEntity<Page<CardDto>> getMyCards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Long userId = securityService.getCurrentUserId();
+        Page<CardDto> cards = cardService.getUserCardsPaginated(userId, PageRequest.of(page, size));
+        return ResponseEntity.ok(cards);
     }
 
     @GetMapping("/account/{accountId}")
     public ResponseEntity<List<CardDto>> getAccountCards(@PathVariable Long accountId) {
+        securityService.checkUserAccess(accountId);
         List<CardDto> cards = cardService.getAccountCards(accountId);
         return ResponseEntity.ok(cards);
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<CardDto>> getUserCards(@PathVariable Long userId) {
+        securityService.checkUserAccess(userId);
         List<CardDto> cards = cardService.getUserCards(userId);
         return ResponseEntity.ok(cards);
     }
