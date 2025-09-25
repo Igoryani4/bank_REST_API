@@ -3,9 +3,14 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.TransactionDto;
 import com.example.bankcards.dto.TransferRequest;
 import com.example.bankcards.entity.Account;
+import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
+import com.example.bankcards.exception.AccountNotFoundException;
+import com.example.bankcards.exception.InsufficientFundsException;
+import com.example.bankcards.exception.TransferValidationException;
 import com.example.bankcards.repository.AccountRepository;
 import com.example.bankcards.repository.TransactionRepository;
+import com.example.bankcards.service.SecurityService;
 import com.example.bankcards.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,29 +29,31 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final SecurityService securityService;
 
     @Override
     @Transactional
     public TransactionDto transfer(TransferRequest transferRequest) {
+        Long currentUserId = null;
+
         try {
-            // Находим счета
+            currentUserId = securityService.getCurrentUserId();
+
             Account fromAccount = accountRepository.findByAccountNumber(transferRequest.getFromAccountNumber())
-                    .orElseThrow(() -> new RuntimeException("From account not found: " + transferRequest.getFromAccountNumber()));
+                    .orElseThrow(() -> new AccountNotFoundException(transferRequest.getFromAccountNumber()));
 
             Account toAccount = accountRepository.findByAccountNumber(transferRequest.getToAccountNumber())
-                    .orElseThrow(() -> new RuntimeException("To account not found: " + transferRequest.getToAccountNumber()));
+                    .orElseThrow(() -> new AccountNotFoundException(transferRequest.getToAccountNumber()));
 
-            // Проверяем возможность перевода
+            validateCardOwnership(fromAccount, toAccount, currentUserId);
             validateTransfer(fromAccount, toAccount, transferRequest.getAmount());
 
-            // Выполняем перевод
             fromAccount.setBalance(fromAccount.getBalance().subtract(transferRequest.getAmount()));
             toAccount.setBalance(toAccount.getBalance().add(transferRequest.getAmount()));
 
             accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
-            // Создаем транзакцию
             Transaction transaction = Transaction.builder()
                     .amount(transferRequest.getAmount())
                     .currency(fromAccount.getCurrency())
@@ -60,15 +67,17 @@ public class TransactionServiceImpl implements TransactionService {
 
             Transaction savedTransaction = transactionRepository.save(transaction);
 
-            log.info("Transfer completed: {} from {} to {}",
+            log.info("Transfer completed: {} {} from {} to {} for user {}",
                     transferRequest.getAmount(),
+                    fromAccount.getCurrency(),
                     transferRequest.getFromAccountNumber(),
-                    transferRequest.getToAccountNumber());
+                    transferRequest.getToAccountNumber(),
+                    currentUserId);
 
             return convertToDto(savedTransaction);
 
         } catch (Exception e) {
-            log.error("Transfer failed: {}", e.getMessage());
+            log.error("Transfer failed for user {}: {}", currentUserId, e.getMessage());
             throw new RuntimeException("Transfer failed: " + e.getMessage(), e);
         }
     }
@@ -82,6 +91,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionDto> getUserTransactions(Long userId) {
+        securityService.checkUserAccess(userId);
         return transactionRepository.findByUserId(userId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -89,6 +99,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionDto> getAccountTransactions(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found: " + accountNumber));
+        securityService.checkUserAccess(account.getUser().getId());
+
         return transactionRepository.findByFromAccountAccountNumberOrToAccountAccountNumber(accountNumber, accountNumber).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -96,6 +110,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionDto> getTransactionsByDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
+        securityService.checkUserAccess(userId);
         return transactionRepository.findByUserIdAndDateRange(userId, startDate, endDate).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -126,8 +141,19 @@ public class TransactionServiceImpl implements TransactionService {
         return dto;
     }
 
+    private void validateCardOwnership(Account fromAccount, Account toAccount, Long currentUserId) {
+        if (!fromAccount.getUser().getId().equals(currentUserId)) {
+            throw new RuntimeException("From account does not belong to current user");
+        }
+
+        if (!toAccount.getUser().getId().equals(currentUserId)) {
+            throw new RuntimeException("To account does not belong to current user");
+        }
+
+        log.debug("Card ownership validation passed for user: {}", currentUserId);
+    }
+
     private void validateTransfer(Account fromAccount, Account toAccount, BigDecimal amount) {
-        // Проверка статуса счетов
         if (fromAccount.getStatus() != Account.AccountStatus.ACTIVE) {
             throw new RuntimeException("From account is not active");
         }
@@ -136,24 +162,44 @@ public class TransactionServiceImpl implements TransactionService {
             throw new RuntimeException("To account is not active");
         }
 
-        // Проверка валюты
+        validateCardStatus(fromAccount, toAccount);
+
         if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
-            throw new RuntimeException("Currency mismatch between accounts");
+            throw new TransferValidationException("Currency mismatch between accounts");
         }
 
-        // Проверка достаточности средств
         if (fromAccount.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient funds");
+            throw new InsufficientFundsException(fromAccount.getBalance(), amount);
         }
 
-        // Проверка положительной суммы
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Amount must be positive");
         }
 
-        // Проверка перевода на тот же счет
         if (fromAccount.getId().equals(toAccount.getId())) {
             throw new RuntimeException("Cannot transfer to the same account");
+        }
+    }
+
+    private void validateCardStatus(Account fromAccount, Account toAccount) {
+        if (fromAccount.getCards() != null && !fromAccount.getCards().isEmpty()) {
+            boolean hasActiveCard = fromAccount.getCards().stream()
+                    .anyMatch(card -> card.getStatus() == Card.CardStatus.ACTIVE);
+            if (!hasActiveCard) {
+                throw new RuntimeException("No active cards for from account");
+            }
+        } else {
+            throw new RuntimeException("From account has no cards");
+        }
+
+        if (toAccount.getCards() != null && !toAccount.getCards().isEmpty()) {
+            boolean hasActiveCard = toAccount.getCards().stream()
+                    .anyMatch(card -> card.getStatus() == Card.CardStatus.ACTIVE);
+            if (!hasActiveCard) {
+                throw new RuntimeException("No active cards for to account");
+            }
+        } else {
+            throw new RuntimeException("To account has no cards");
         }
     }
 }

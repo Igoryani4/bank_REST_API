@@ -5,8 +5,6 @@ import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.dto.UserRegistrationDto;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.repository.AccountRepository;
-import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.AccountService;
 import com.example.bankcards.service.CardService;
@@ -21,15 +19,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private final AccountRepository accountRepository;
-    private final CardRepository cardRepository;
     private final CardService cardService;
     private final AccountService accountService;
 

@@ -22,6 +22,10 @@ spring:
     change-log: classpath:/db/db.changelog-master.yaml
     enabled: true
 
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/docs/
+
 app:
   encryption:
     key: "mySuperSecretKeyThatIsLongEnough"
@@ -34,7 +38,13 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+    enabled: true
     operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  default-produces-media-type: application/json
+
 
 
 logging:
