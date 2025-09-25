@@ -1,23 +1,24 @@
 package com.example.bankcards.config;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.Contact;
-import org.springframework.context.annotation.Bean;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Bank Cards Management API",
+                version = "1.0.0",
+                description = "REST API для управления банковскими картами"
+        )
+)
+@SecurityScheme(
+        name = "bearerAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT"
+)
 public class OpenApiConfig {
-
-    @Bean
-    public OpenAPI bankOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Bank REST API")
-                        .description("Bank Management System REST API")
-                        .version("1.0.0")
-                        .contact(new Contact()
-                                .name("Bank API Support")
-                                .email("support@bank.com")));
-    }
 }

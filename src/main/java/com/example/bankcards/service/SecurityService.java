@@ -1,6 +1,7 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.entity.Card;
+import com.example.bankcards.exception.CardNotFoundException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +20,11 @@ public class SecurityService {
     public void checkCardAccess(Long cardId) {
         String currentUsername = getCurrentUsername();
         Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found with id: " + cardId));
+                .orElseThrow(() -> new CardNotFoundException(cardId));
 
         if (!hasAdminRole() && !card.getAccount().getUser().getUsername().equals(currentUsername)) {
             log.warn("Access denied: User {} tried to access card {}", currentUsername, cardId);
             throw new AccessDeniedException("No access to this card");
-        }
-    }
-
-    public void checkUserAccess(Long userId) {
-        String currentUsername = getCurrentUsername();
-        if (!hasAdminRole() && !getCurrentUserId().equals(userId)) {
-            throw new AccessDeniedException("No access to this user data");
         }
     }
 
@@ -53,5 +47,27 @@ public class SecurityService {
 
     public boolean isCurrentUser(Long userId) {
         return getCurrentUserId().equals(userId);
+    }
+
+    // Добавляем эти методы в существующий SecurityService
+    public boolean isAdmin() {
+        return hasAdminRole();
+    }
+
+    public void checkAdminAccess() {
+        if (!isAdmin()) {
+            throw new AccessDeniedException("Admin access required");
+        }
+    }
+
+    public boolean canViewAllCards() {
+        return isAdmin();
+    }
+
+    // Обновляем метод checkUserAccess для большей гибкости
+    public void checkUserAccess(Long userId) {
+        if (!hasAdminRole() && !getCurrentUserId().equals(userId)) {
+            throw new AccessDeniedException("No access to this user data");
+        }
     }
 }

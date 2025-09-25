@@ -3,10 +3,7 @@ package com.example.bankcards.entity;
 import com.example.bankcards.service.EncryptionService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,7 +11,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cards")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

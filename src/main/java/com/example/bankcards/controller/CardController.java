@@ -8,13 +8,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cards")
+@RequestMapping("/cards")
 @RequiredArgsConstructor
 public class CardController {
 
@@ -23,12 +24,18 @@ public class CardController {
 
     @PostMapping
     public ResponseEntity<CardDto> createCard(@Valid @RequestBody Card card) {
+        // Только ADMIN может создавать карты
+        securityService.checkAdminAccess();
+        if (card.getAccount() == null) {
+            return ResponseEntity.badRequest().build();
+        }
         Card createdCard = cardService.createCard(card);
         return ResponseEntity.ok(cardService.convertToDto(createdCard));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CardDto> getCardById(@PathVariable Long id) {
+        // Проверяем доступ к карте (SecurityService уже делает проверку в cardService.getCardById)
         CardDto card = cardService.getCardById(id);
         return ResponseEntity.ok(card);
     }
@@ -36,9 +43,35 @@ public class CardController {
     @GetMapping("/my-cards")
     public ResponseEntity<Page<CardDto>> getMyCards(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) Card.CardStatus status) {
+
         Long userId = securityService.getCurrentUserId();
-        Page<CardDto> cards = cardService.getUserCardsPaginated(userId, PageRequest.of(page, size));
+        PageRequest pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+
+        Page<CardDto> cards = cardService.getUserCardsPaginated(userId, status, pageable);
+        return ResponseEntity.ok(cards);
+    }
+
+    @GetMapping("/admin/all-cards")
+    public ResponseEntity<Page<CardDto>> getAllCards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) Card.CardStatus status,
+            @RequestParam(required = false) Long userId) {
+
+        // Только ADMIN имеет доступ ко всем картам
+        securityService.checkAdminAccess();
+
+        PageRequest pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+
+        Page<CardDto> cards = cardService.getAllCardsPaginated(userId, status, pageable);
         return ResponseEntity.ok(cards);
     }
 
@@ -60,12 +93,32 @@ public class CardController {
     public ResponseEntity<CardDto> updateCardStatus(
             @PathVariable Long id,
             @RequestParam Card.CardStatus status) {
+
+        // ADMIN может менять статус любой карты, USER - только запросить блокировку своей
+        if (!securityService.isAdmin()) {
+            securityService.checkCardAccess(id); // Проверяем что карта принадлежит пользователю
+            // USER может только блокировать карту, но не активировать
+            if (status != Card.CardStatus.BLOCKED) {
+                throw new RuntimeException("Users can only request card blocking");
+            }
+        }
+
         Card updatedCard = cardService.updateCardStatus(id, status);
+        return ResponseEntity.ok(cardService.convertToDto(updatedCard));
+    }
+
+    @PostMapping("/{id}/block")
+    public ResponseEntity<CardDto> requestCardBlock(@PathVariable Long id) {
+        // USER запрашивает блокировку своей карты
+        securityService.checkCardAccess(id);
+        Card updatedCard = cardService.updateCardStatus(id, Card.CardStatus.BLOCKED);
         return ResponseEntity.ok(cardService.convertToDto(updatedCard));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
+        // Только ADMIN может удалять карты
+        securityService.checkAdminAccess();
         cardService.deleteCard(id);
         return ResponseEntity.ok().build();
     }

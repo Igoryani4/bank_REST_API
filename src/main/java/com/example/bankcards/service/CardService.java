@@ -14,8 +14,13 @@ public interface CardService {
     List<CardDto> getAccountCards(Long accountId);
     List<CardDto> getUserCards(Long userId);
 
-    Page<CardDto> getUserCardsPaginated(Long userId, Pageable pageable);
+    Page<CardDto> getUserCardsPaginated(Long userId, Card.CardStatus status, Pageable pageable);
+
+    Page<CardDto> getAllCardsPaginated(Long userId, Card.CardStatus status, Pageable pageable);
+
     Card updateCardStatus(Long cardId, Card.CardStatus status);
     void deleteCard(Long cardId);
     CardDto convertToDto(Card card);
+
+
 }

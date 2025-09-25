@@ -30,7 +30,7 @@ public class SecurityConfig {
     private final JwtUtils jwtUtils;
 
     @Bean
-    public JwtAuthTokenFilter authenticationJwtTokenFilter(JwtUtils jwtUtils) {
+    public JwtAuthTokenFilter authenticationJwtTokenFilter() {
         return new JwtAuthTokenFilter(jwtUtils, userDetailsService);
     }
 
@@ -58,25 +58,30 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Публичные endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/health").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Swagger UI paths
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+
+                        // Публичные endpoints (БЕЗ /api в начале!)
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/health").permitAll()
 
                         // endpoints требующие аутентификации
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users").hasRole("ADMIN")
-                        .requestMatchers("/api/accounts/**").authenticated()
-                        .requestMatchers("/api/transactions/**").authenticated()
-                        .requestMatchers("/api/cards/**").authenticated()
+                        .requestMatchers("/users/register").permitAll()
+                        .requestMatchers("/users").hasRole("ADMIN")
+                        .requestMatchers("/accounts/**").authenticated()
+                        .requestMatchers("/transactions/**").authenticated()
+                        .requestMatchers("/cards/**").authenticated()
 
                         // Все остальное требует аутентификации
                         .anyRequest().authenticated()
                 );
 
-        http.authenticationProvider(authenticationProvider());
-
-        http.addFilterBefore(authenticationJwtTokenFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class);
+//        http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
