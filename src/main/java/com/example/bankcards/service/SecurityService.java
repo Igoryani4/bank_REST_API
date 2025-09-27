@@ -49,7 +49,6 @@ public class SecurityService {
         return getCurrentUserId().equals(userId);
     }
 
-    // Добавляем эти методы в существующий SecurityService
     public boolean isAdmin() {
         return hasAdminRole();
     }
@@ -64,7 +63,6 @@ public class SecurityService {
         return isAdmin();
     }
 
-    // Обновляем метод checkUserAccess для большей гибкости
     public void checkUserAccess(Long userId) {
         if (!hasAdminRole() && !getCurrentUserId().equals(userId)) {
             throw new AccessDeniedException("No access to this user data");

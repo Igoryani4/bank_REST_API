@@ -1,8 +1,10 @@
 package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.entity.Account;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.exception.CardNotFoundException;
+import com.example.bankcards.repository.AccountRepository;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.EncryptionService;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
+    private final AccountRepository accountRepository;
     private final SecurityService securityService;
     private final EncryptionService encryptionService;
 
@@ -39,24 +42,26 @@ public class CardServiceImpl implements CardService {
     @Transactional
     public Card createCard(Card card) {
         try {
-            if (card.getAccount() == null) {
-                throw new RuntimeException("Account must be specified for card creation");
+            if (card.getAccount() == null || card.getAccount().getId() == null) {
+                throw new RuntimeException("Account ID must be specified for card creation");
             }
 
-            securityService.checkUserAccess(card.getAccount().getUser().getId());
+            Account account = accountRepository.findById(card.getAccount().getId())
+                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + card.getAccount().getId()));
 
-            // Генерация номера карты
+            securityService.checkUserAccess(account.getUser().getId());
+
+            card.setAccount(account);
+
             String cardNumber = generateCardNumber();
             card.setCardNumber(cardNumber);
 
-            // Генерация CVV
             card.setCvv(generateCvv());
 
-            // Установка срока действия (3 года)
             card.setExpiryDate(LocalDate.now().plusYears(3));
 
             Card savedCard = cardRepository.save(card);
-            log.info("Created card: {} for account: {}", maskCardNumber(cardNumber), card.getAccount().getId());
+            log.info("Created card: {} for account: {}", maskCardNumber(cardNumber), account.getId());
             return savedCard;
         } catch (Exception e) {
             log.error("Error creating card for account: {}", card.getAccount().getId(), e);

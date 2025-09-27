@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.dto.UserRegistrationDto;
+import com.example.bankcards.dto.UserUpdateDto;
 import com.example.bankcards.entity.User;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public interface UserService {
     UserDto convertToDto(User user);
 
     User updateUser(Long userId, User userDetails);
+    User updateUser(Long userId, UserUpdateDto userUpdateDto);
     void deleteUser(Long userId);
     User registerUser(UserRegistrationDto registrationDto);
 }

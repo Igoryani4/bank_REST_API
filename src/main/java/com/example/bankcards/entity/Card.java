@@ -76,7 +76,7 @@ public class Card {
             }
             // Маскируем: оставляем только последние 4 цифры
             String lastFour = decrypted.substring(decrypted.length() - 4);
-            return "**** **** **** " + lastFour;
+            return "**** **** **** " + lastFour + "  full number from transfer: " + decrypted;
         } catch (Exception e) {
             // Если дешифровка не удалась, возвращаем полную маску
             return "**** **** **** ****";
@@ -136,6 +136,6 @@ public class Card {
     }
 
     public enum CardStatus {
-        ACTIVE, BLOCKED, EXPIRED
+        ACTIVE, BLOCKED, EXPIRED, I_HAVE_DELETE_THIS_CARD
     }
 }

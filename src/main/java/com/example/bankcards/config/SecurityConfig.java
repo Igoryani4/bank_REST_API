@@ -58,29 +58,25 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger UI paths
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/webjars/**").permitAll()
-                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                        // Публичные endpoints (БЕЗ /api в начале!)
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/health").permitAll()
 
-                        // endpoints требующие аутентификации
-                        .requestMatchers("/users/register").permitAll()
-                        .requestMatchers("/users").hasRole("ADMIN")
-                        .requestMatchers("/accounts/**").authenticated()
-                        .requestMatchers("/transactions/**").authenticated()
-                        .requestMatchers("/cards/**").authenticated()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/transactions/admin/**").hasRole("ADMIN")
 
-                        // Все остальное требует аутентификации
+                        .requestMatchers("/accounts/my-accounts").authenticated()
+                        .requestMatchers("/cards/my-cards").authenticated()
+                        .requestMatchers("/api/users/my-profile").authenticated()
+                        .requestMatchers("/transactions/transfer").authenticated()
+                        .requestMatchers("/transactions/card-to-card").authenticated()
+                        .requestMatchers("/transactions/card-to-account").authenticated()
+
                         .anyRequest().authenticated()
                 );
-
-//        http.authenticationProvider(authenticationProvider());
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

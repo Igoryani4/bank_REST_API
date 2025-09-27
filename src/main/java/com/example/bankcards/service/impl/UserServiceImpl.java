@@ -1,9 +1,6 @@
 package com.example.bankcards.service.impl;
 
-import com.example.bankcards.dto.AccountDto;
-import com.example.bankcards.dto.CardDto;
-import com.example.bankcards.dto.UserDto;
-import com.example.bankcards.dto.UserRegistrationDto;
+import com.example.bankcards.dto.*;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.AccountService;
@@ -174,7 +171,6 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Username already exists: " + userDetails.getUsername());
         }
 
-        // Проверка уникальности email, если он изменен
         if (!user.getEmail().equals(userDetails.getEmail()) &&
                 userRepository.existsByEmail(userDetails.getEmail())) {
             throw new RuntimeException("Email already exists: " + userDetails.getEmail());
@@ -190,6 +186,47 @@ public class UserServiceImpl implements UserService {
         log.info("Updated user: {}", userId);
         return updatedUser;
     }
+
+    @Override
+    @Transactional
+    public User updateUser(Long userId, UserUpdateDto userUpdateDto) {
+        User user = getUserById(userId);
+
+        if (userUpdateDto.hasUsername() && !user.getUsername().equals(userUpdateDto.getUsername())) {
+            if (userRepository.existsByUsername(userUpdateDto.getUsername())) {
+                throw new RuntimeException("Username already exists: " + userUpdateDto.getUsername());
+            }
+            user.setUsername(userUpdateDto.getUsername());
+        }
+
+        if (userUpdateDto.hasEmail() && !user.getEmail().equals(userUpdateDto.getEmail())) {
+            if (userRepository.existsByEmail(userUpdateDto.getEmail())) {
+                throw new RuntimeException("Email already exists: " + userUpdateDto.getEmail());
+            }
+            user.setEmail(userUpdateDto.getEmail());
+        }
+
+        if (userUpdateDto.hasPassword()) {
+            user.setPassword(passwordEncoder.encode(userUpdateDto.getPassword()));
+        }
+
+        if (userUpdateDto.hasFirstName()) {
+            user.setFirstName(userUpdateDto.getFirstName());
+        }
+
+        if (userUpdateDto.hasLastName()) {
+            user.setLastName(userUpdateDto.getLastName());
+        }
+
+        if (userUpdateDto.hasRoles()) {
+            user.setRoles(userUpdateDto.getRoles());
+        }
+
+        User updatedUser = userRepository.save(user);
+        log.info("Updated user with partial data: {}", userId);
+        return updatedUser;
+    }
+
 
     @Override
     @Transactional

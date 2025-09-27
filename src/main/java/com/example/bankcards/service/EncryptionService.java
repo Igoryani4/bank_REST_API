@@ -30,17 +30,14 @@ public class EncryptionService {
                 throw new IllegalArgumentException("Data to encrypt cannot be null");
             }
 
-            // Генерируем случайный IV (16 байт)
             byte[] iv = new byte[16];
             java.security.SecureRandom.getInstanceStrong().nextBytes(iv);
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
-            // Шифруем данные
             Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
             byte[] encryptedBytes = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
 
-            // Объединяем IV + зашифрованные данные и кодируем в Base64
             byte[] combined = new byte[iv.length + encryptedBytes.length];
             System.arraycopy(iv, 0, combined, 0, iv.length);
             System.arraycopy(encryptedBytes, 0, combined, iv.length, encryptedBytes.length);
@@ -68,13 +65,11 @@ public class EncryptionService {
 
             byte[] combined = Base64.getDecoder().decode(trimmedData);
 
-            // Проверяем минимальную длину (IV + хотя бы 1 байт данных)
             if (combined.length <= 16) {
                 log.error("Invalid encrypted data length: {}", combined.length);
                 return null;
             }
 
-            // Извлекаем IV (первые 16 байт)
             byte[] iv = new byte[16];
             byte[] encryptedBytes = new byte[combined.length - 16];
             System.arraycopy(combined, 0, iv, 0, 16);
@@ -82,7 +77,6 @@ public class EncryptionService {
 
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
-            // Дешифруем данные
             Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
             byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
@@ -102,7 +96,6 @@ public class EncryptionService {
             return keyBytes;
         }
 
-        // Если ключ длиннее - обрезаем до 32 байт
         if (keyBytes.length > REQUIRED_LENGTH) {
             byte[] normalized = new byte[REQUIRED_LENGTH];
             System.arraycopy(keyBytes, 0, normalized, 0, REQUIRED_LENGTH);
@@ -110,7 +103,6 @@ public class EncryptionService {
             return normalized;
         }
 
-        // Если ключ короче - дополняем нулями до 32 байт
         byte[] normalized = new byte[REQUIRED_LENGTH];
         System.arraycopy(keyBytes, 0, normalized, 0, keyBytes.length);
         for (int i = keyBytes.length; i < REQUIRED_LENGTH; i++) {

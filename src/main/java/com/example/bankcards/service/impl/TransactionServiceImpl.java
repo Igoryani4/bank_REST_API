@@ -1,5 +1,7 @@
 package com.example.bankcards.service.impl;
 
+import com.example.bankcards.dto.CardToAccountTransferRequest;
+import com.example.bankcards.dto.CardToCardTransferRequest;
 import com.example.bankcards.dto.TransactionDto;
 import com.example.bankcards.dto.TransferRequest;
 import com.example.bankcards.entity.Account;
@@ -9,6 +11,7 @@ import com.example.bankcards.exception.AccountNotFoundException;
 import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.exception.TransferValidationException;
 import com.example.bankcards.repository.AccountRepository;
+import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.TransactionRepository;
 import com.example.bankcards.service.SecurityService;
 import com.example.bankcards.service.TransactionService;
@@ -30,6 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final SecurityService securityService;
+    private final CardRepository cardRepository;
 
     @Override
     @Transactional
@@ -141,6 +145,83 @@ public class TransactionServiceImpl implements TransactionService {
         return dto;
     }
 
+    @Override
+    @Transactional
+    public TransactionDto cardToCardTransfer(CardToCardTransferRequest request) {
+        Long currentUserId = securityService.getCurrentUserId();
+
+        Card fromCard = cardRepository.findById(request.getFromCardId())
+                .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getFromCardId()));
+
+        Card toCard = cardRepository.findById(request.getToCardId())
+                .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getToCardId()));
+
+        securityService.checkCardAccess(request.getFromCardId());
+
+        if (!fromCard.getAccount().getUser().getId().equals(currentUserId) ||
+                !toCard.getAccount().getUser().getId().equals(currentUserId)){
+            throw new RuntimeException("Cannot transfer between cards of different users");
+        }
+
+        Account fromAccount = fromCard.getAccount();
+        Account toAccount = toCard.getAccount();
+
+        return performTransfer(fromAccount, toAccount, request.getAmount(),
+                request.getDescription() != null ? request.getDescription() :
+                        "Card-to-card transfer to " + toCard.getMaskedCardNumber());
+    }
+
+    private TransactionDto performTransfer(Account fromAccount, Account toAccount,
+                                           BigDecimal amount, String description) {
+        validateTransfer(fromAccount, toAccount, amount);
+
+        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+        toAccount.setBalance(toAccount.getBalance().add(amount));
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        Transaction transaction = Transaction.builder()
+                .amount(amount)
+                .currency(fromAccount.getCurrency())
+                .type(Transaction.TransactionType.TRANSFER)
+                .status(Transaction.TransactionStatus.COMPLETED)
+                .description(description)
+                .fromAccount(fromAccount)
+                .toAccount(toAccount)
+                .build();
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        log.info("Card transfer completed: {} {} from account {} to account {}",
+                amount, fromAccount.getCurrency(), fromAccount.getId(), toAccount.getId());
+
+        return convertToDto(savedTransaction);
+    }
+
+    @Override
+    @Transactional
+    public TransactionDto cardToAccountTransfer(CardToAccountTransferRequest request) {
+        Long currentUserId = securityService.getCurrentUserId();
+
+        // Получаем карту отправителя
+        Card fromCard = cardRepository.findById(request.getFromCardId())
+                .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getFromCardId()));
+
+        // Проверяем доступ к карте
+        securityService.checkCardAccess(request.getFromCardId());
+
+        // Получаем счет получателя по номеру
+        Account toAccount = accountRepository.findByAccountNumber(request.getToAccountNumber())
+                .orElseThrow(() -> new AccountNotFoundException(request.getToAccountNumber()));
+
+        Account fromAccount = fromCard.getAccount();
+
+        return performTransfer(fromAccount, toAccount, request.getAmount(),
+                request.getDescription() != null ? request.getDescription() :
+                        "Transfer to account " + request.getToAccountNumber());
+    }
+
     private void validateCardOwnership(Account fromAccount, Account toAccount, Long currentUserId) {
         if (!fromAccount.getUser().getId().equals(currentUserId)) {
             throw new RuntimeException("From account does not belong to current user");
@@ -162,7 +243,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new RuntimeException("To account is not active");
         }
 
-        validateCardStatus(fromAccount, toAccount);
+        validateCardStatus(fromAccount);
 
         if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
             throw new TransferValidationException("Currency mismatch between accounts");
@@ -181,7 +262,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private void validateCardStatus(Account fromAccount, Account toAccount) {
+    private void validateCardStatus(Account fromAccount) {
         if (fromAccount.getCards() != null && !fromAccount.getCards().isEmpty()) {
             boolean hasActiveCard = fromAccount.getCards().stream()
                     .anyMatch(card -> card.getStatus() == Card.CardStatus.ACTIVE);
@@ -192,14 +273,5 @@ public class TransactionServiceImpl implements TransactionService {
             throw new RuntimeException("From account has no cards");
         }
 
-        if (toAccount.getCards() != null && !toAccount.getCards().isEmpty()) {
-            boolean hasActiveCard = toAccount.getCards().stream()
-                    .anyMatch(card -> card.getStatus() == Card.CardStatus.ACTIVE);
-            if (!hasActiveCard) {
-                throw new RuntimeException("No active cards for to account");
-            }
-        } else {
-            throw new RuntimeException("To account has no cards");
-        }
     }
 }

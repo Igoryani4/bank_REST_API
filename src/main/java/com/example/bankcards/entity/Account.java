@@ -80,6 +80,6 @@ public class Account {
     }
 
     public enum AccountStatus {
-        ACTIVE, BLOCKED, CLOSED
+        ACTIVE, BLOCKED, CLOSED, I_HAVE_DELETE_ACCOUNT
     }
 }

@@ -43,7 +43,12 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     doc-expansion: none
+    oauth:
+      client-id: swagger-ui
+      realm: bank-api
   default-produces-media-type: application/json
+  cache:
+    disabled: true
 
 
 
