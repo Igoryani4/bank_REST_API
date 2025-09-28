@@ -110,7 +110,6 @@ public class GlobalExceptionHandler {
             this.errors = errors;
         }
 
-        // Getters and setters
         public int getStatus() { return status; }
         public void setStatus(int status) { this.status = status; }
 

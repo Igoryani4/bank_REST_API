@@ -2,7 +2,6 @@ package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.AccountDto;
 import com.example.bankcards.entity.Account;
-import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.AccountRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.AccountService;
@@ -27,7 +26,6 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public Account createAccount(Account account) {
         try {
-            // Генерация номера счета
             String accountNumber = generateAccountNumber();
             account.setAccountNumber(accountNumber);
 

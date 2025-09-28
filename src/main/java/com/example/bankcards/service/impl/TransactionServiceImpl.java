@@ -8,6 +8,7 @@ import com.example.bankcards.entity.Account;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.exception.AccountNotFoundException;
+import com.example.bankcards.exception.CardNotFoundException;
 import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.exception.TransferValidationException;
 import com.example.bankcards.repository.AccountRepository;
@@ -85,7 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         } catch (Exception e) {
             log.error("Transfer failed for user {}: {}", currentUserId, e.getMessage());
-            throw new RuntimeException("Transfer failed: " + e.getMessage(), e);
+            throw new TransferValidationException("Transfer failed: " + e.getMessage());
         }
     }
 
@@ -154,16 +155,16 @@ public class TransactionServiceImpl implements TransactionService {
         Long currentUserId = securityService.getCurrentUserId();
 
         Card fromCard = cardRepository.findById(request.getFromCardId())
-                .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getFromCardId()));
+                .orElseThrow(() -> new CardNotFoundException("Card not found with id: " + request.getFromCardId()));
 
         Card toCard = cardRepository.findById(request.getToCardId())
-                .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getToCardId()));
+                .orElseThrow(() -> new CardNotFoundException("Card not found with ids: " + request.getToCardId()));
 
         securityService.checkCardAccess(request.getFromCardId());
 
         if (!fromCard.getAccount().getUser().getId().equals(currentUserId) ||
                 !toCard.getAccount().getUser().getId().equals(currentUserId)){
-            throw new RuntimeException("Cannot transfer between cards of different users");
+            throw new TransferValidationException("Cannot transfer between cards of different users");
         }
 
         Account fromAccount = fromCard.getAccount();
@@ -205,7 +206,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionDto cardToAccountTransfer(CardToAccountTransferRequest request) {
-        Long currentUserId = securityService.getCurrentUserId();
+
 
         // Получаем карту отправителя
         Card fromCard = cardRepository.findById(request.getFromCardId())
@@ -227,11 +228,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void validateCardOwnership(Account fromAccount, Account toAccount, Long currentUserId) {
         if (!fromAccount.getUser().getId().equals(currentUserId)) {
-            throw new RuntimeException("From account does not belong to current user");
+            throw new CardNotFoundException("From account does not belong to current user");
         }
 
         if (!toAccount.getUser().getId().equals(currentUserId)) {
-            throw new RuntimeException("To account does not belong to current user");
+            throw new CardNotFoundException("To account does not belong to current user");
         }
 
         log.debug("Card ownership validation passed for user: {}", currentUserId);
@@ -239,11 +240,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void validateTransfer(Account fromAccount, Account toAccount, BigDecimal amount) {
         if (fromAccount.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new RuntimeException("From account is not active");
+            throw new CardNotFoundException("From account is not active");
         }
 
         if (toAccount.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new RuntimeException("To account is not active");
+            throw new CardNotFoundException("To account is not active");
         }
 
         validateCardStatus(fromAccount);
@@ -261,7 +262,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         if (fromAccount.getId().equals(toAccount.getId())) {
-            throw new RuntimeException("Cannot transfer to the same account");
+            throw new TransferValidationException("Cannot transfer to the same account");
         }
     }
 
@@ -270,10 +271,10 @@ public class TransactionServiceImpl implements TransactionService {
             boolean hasActiveCard = fromAccount.getCards().stream()
                     .anyMatch(card -> card.getStatus() == Card.CardStatus.ACTIVE);
             if (!hasActiveCard) {
-                throw new RuntimeException("No active cards for from account");
+                throw new CardNotFoundException("No active cards for from account");
             }
         } else {
-            throw new RuntimeException("From account has no cards");
+            throw new CardNotFoundException("From account has no cards");
         }
 
     }

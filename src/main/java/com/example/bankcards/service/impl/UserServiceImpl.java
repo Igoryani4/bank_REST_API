@@ -34,16 +34,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User createUser(User user) {
         try {
-            if (userRepository.existsByUsername(user.getUsername())) {
-                throw new RuntimeException("Username already exists: " + user.getUsername());
+            if (Boolean.TRUE.equals(userRepository.existsByUsername(user.getUsername()))) {
+                throw new IllegalArgumentException("Username already exists1: " + user.getUsername());
             }
 
-            if (userRepository.existsByEmail(user.getEmail())) {
-                throw new RuntimeException("Email already exists: " + user.getEmail());
+            if (Boolean.TRUE.equals(userRepository.existsByEmail(user.getEmail()))) {
+                throw new IllegalArgumentException("Email already exists1: " + user.getEmail());
             }
 
             if (user.getRoles() == null || user.getRoles().isEmpty()) {
-                user.setRoles(List.of("ROLE_USER")); // Добавляем роль по умолчанию
+                user.setRoles(List.of("ROLE_USER"));
             }
 
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
             return savedUser;
         } catch (Exception e) {
             log.error("Error creating user: {}", user.getUsername(), e);
-            throw new RuntimeException("Failed to create user", e);
+            throw new IllegalArgumentException("Failed to create user", e);
         }
     }
 
@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserWithCards(Long userId) {
         User user = userRepository.findByIdWithAccountsAndCards(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return convertToDto(user); // используем обновленный метод
+        return convertToDto(user);
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getAllUsersWithCards() {
         List<User> users = userRepository.findAllWithAccountsAndCards();
         return users.stream()
-                .map(this::convertToDto) // используем обновленный метод
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
@@ -116,7 +116,6 @@ public class UserServiceImpl implements UserService {
             dto.setAccounts(user.getAccounts().stream()
                     .map(account -> {
                         AccountDto accountDto = accountService.convertToDto(account);
-                        // Загружаем карты для счета
                         List<CardDto> cards = cardService.getAccountCards(account.getId());
                         accountDto.setCards(cards);
                         return accountDto;
@@ -143,37 +142,19 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    private UserDto convertToDtoWithCards(User user) {
-        UserDto dto = convertToDto(user); // базовый метод
-
-        // Добавляем карты к каждому счету
-        dto.setAccounts(user.getAccounts().stream()
-                .map(account -> {
-                    AccountDto accountDto = accountService.convertToDto(account);
-                    // Загружаем карты для счета
-                    List<CardDto> cards = cardService.getAccountCards(account.getId());
-                    accountDto.setCards(cards);
-                    return accountDto;
-                })
-                .collect(Collectors.toList()));
-
-        return dto;
-    }
-
     @Override
     @Transactional
     public User updateUser(Long userId, User userDetails) {
         User user = getUserById(userId);
 
-        // Проверка уникальности username, если он изменен
         if (!user.getUsername().equals(userDetails.getUsername()) &&
-                userRepository.existsByUsername(userDetails.getUsername())) {
-            throw new RuntimeException("Username already exists: " + userDetails.getUsername());
+                Boolean.TRUE.equals(userRepository.existsByUsername(userDetails.getUsername()))) {
+            throw new IllegalArgumentException("Username already exists: " + userDetails.getUsername());
         }
 
         if (!user.getEmail().equals(userDetails.getEmail()) &&
-                userRepository.existsByEmail(userDetails.getEmail())) {
-            throw new RuntimeException("Email already exists: " + userDetails.getEmail());
+                Boolean.TRUE.equals(userRepository.existsByEmail(userDetails.getEmail()))) {
+            throw new IllegalArgumentException("Email already exists: " + userDetails.getEmail());
         }
 
         user.setUsername(userDetails.getUsername());
@@ -193,15 +174,15 @@ public class UserServiceImpl implements UserService {
         User user = getUserById(userId);
 
         if (userUpdateDto.hasUsername() && !user.getUsername().equals(userUpdateDto.getUsername())) {
-            if (userRepository.existsByUsername(userUpdateDto.getUsername())) {
-                throw new RuntimeException("Username already exists: " + userUpdateDto.getUsername());
+            if (Boolean.TRUE.equals(userRepository.existsByUsername(userUpdateDto.getUsername()))) {
+                throw new IllegalArgumentException("Username already exists: " + userUpdateDto.getUsername());
             }
             user.setUsername(userUpdateDto.getUsername());
         }
 
         if (userUpdateDto.hasEmail() && !user.getEmail().equals(userUpdateDto.getEmail())) {
-            if (userRepository.existsByEmail(userUpdateDto.getEmail())) {
-                throw new RuntimeException("Email already exists: " + userUpdateDto.getEmail());
+            if (Boolean.TRUE.equals(userRepository.existsByEmail(userUpdateDto.getEmail()))) {
+                throw new IllegalArgumentException("Email already exists: " + userUpdateDto.getEmail());
             }
             user.setEmail(userUpdateDto.getEmail());
         }
@@ -242,7 +223,7 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .username(registrationDto.getUsername())
                 .email(registrationDto.getEmail())
-                .password(registrationDto.getPassword()) // Пока без шифрования
+                .password(registrationDto.getPassword())
                 .firstName(registrationDto.getFirstName())
                 .lastName(registrationDto.getLastName())
                 .phoneNumber(registrationDto.getPhoneNumber())

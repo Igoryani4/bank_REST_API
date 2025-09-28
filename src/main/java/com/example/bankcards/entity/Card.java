@@ -53,20 +53,17 @@ public class Card {
 
     @Transient
     @JsonIgnore
-    private transient String decryptedCardNumber;
+    private String decryptedCardNumber;
 
     @Transient
     @JsonIgnore
-    private transient String decryptedCvv;
+    private String decryptedCvv;
 
+    @Setter
     @Transient
     @JsonIgnore
     private static EncryptionService encryptionService;
 
-    // Статический метод для инъекции сервиса
-    public static void setEncryptionService(EncryptionService service) {
-        encryptionService = service;
-    }
 
     public String getMaskedCardNumber() {
         try {
@@ -88,7 +85,6 @@ public class Card {
         try {
             return encryptionService.decrypt(encryptedCardNumber);
         } catch (Exception e) {
-//            log.error("Failed to decrypt card number for card id: {}", id, e);
             return null;
         }
     }
@@ -100,12 +96,6 @@ public class Card {
         }
     }
 
-    public String getCvv() {
-        if (decryptedCvv == null && encryptedCvv != null && encryptionService != null) {
-            decryptedCvv = encryptionService.decrypt(encryptedCvv);
-        }
-        return decryptedCvv;
-    }
 
     public void setCvv(String cvv) {
         this.decryptedCvv = cvv;

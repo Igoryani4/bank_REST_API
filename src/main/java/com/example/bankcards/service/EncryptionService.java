@@ -9,14 +9,12 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.logging.Logger;
-
 
 @Service
 @Slf4j
 public class EncryptionService {
     private final SecretKeySpec secretKey;
-    private final String algorithm = "AES/CBC/PKCS5Padding";
+    private  final String algorithm = "AES/CBC/PKCS5Padding";
 
     public EncryptionService(@Value("${app.encryption.key}") String key) {
         byte[] keyBytes = normalizeKey(key);
@@ -45,7 +43,7 @@ public class EncryptionService {
             return Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
             log.error("Encryption failed for data: {}", data, e);
-            throw new RuntimeException("Encryption failed", e);
+            throw new IllegalArgumentException("Encryption failed", e);
         }
     }
 
@@ -84,7 +82,7 @@ public class EncryptionService {
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.error("Decryption failed for encrypted data: '{}'", encryptedData, e);
-            throw new RuntimeException("Decryption failed", e);
+            throw new IllegalArgumentException("Decryption failed", e);
         }
     }
 

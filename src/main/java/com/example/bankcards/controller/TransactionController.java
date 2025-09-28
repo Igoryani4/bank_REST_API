@@ -6,7 +6,6 @@ import com.example.bankcards.dto.TransactionDto;
 import com.example.bankcards.dto.TransferRequest;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.repository.CardRepository;
-import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.SecurityService;
 import com.example.bankcards.service.TransactionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

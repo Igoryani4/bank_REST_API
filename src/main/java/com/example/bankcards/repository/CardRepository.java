@@ -26,7 +26,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                                             @Param("status") Card.CardStatus status,
                                             Pageable pageable);
 
-    // Для ADMIN - все карты с фильтрацией
     @Query("SELECT c FROM Card c WHERE (:userId IS NULL OR c.account.user.id = :userId) AND (:status IS NULL OR c.status = :status)")
     Page<Card> findAllWithFilters(@Param("userId") Long userId,
                                   @Param("status") Card.CardStatus status,
@@ -35,7 +34,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("SELECT COUNT(c) > 0 FROM Card c WHERE c.encryptedCardNumber = :encryptedCardNumber")
     boolean existsByCardNumber(@Param("encryptedCardNumber") String encryptedCardNumber);
 
-    // Поиск просроченных карт для автоматического обновления статуса
     @Query("SELECT c FROM Card c WHERE c.expiryDate < CURRENT_DATE AND c.status = 'ACTIVE'")
     List<Card> findExpiredActiveCards();
 

@@ -4,7 +4,6 @@ import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.dto.UserRegistrationDto;
 import com.example.bankcards.dto.UserUpdateDto;
 import com.example.bankcards.entity.User;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
