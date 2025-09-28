@@ -70,7 +70,7 @@ class AuthControllerTest {
 
     @Test
     void authenticateUser_Success() throws Exception {
-        // Arrange
+
         Authentication authentication = createMockAuthentication();
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -78,9 +78,8 @@ class AuthControllerTest {
         when(jwtUtils.generateJwtToken(any(Authentication.class)))
                 .thenReturn("jwt-token");
 
-        // Act & Assert
         mockMvc.perform(post("/auth/signin")
-                        .with(csrf())  // Добавляем CSRF токен
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isOk())
@@ -93,7 +92,6 @@ class AuthControllerTest {
 
     @Test
     void registerUser_Success() throws Exception {
-        // Arrange
         User user = User.builder()
                 .id(1L)
                 .username("testuser")
@@ -104,10 +102,8 @@ class AuthControllerTest {
                 .build();
 
         when(userService.registerUser(any(UserRegistrationDto.class))).thenReturn(user);
-
-        // Act & Assert
         mockMvc.perform(post("/auth/signup")
-                        .with(csrf())  // Добавляем CSRF токен
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationDto)))
                 .andExpect(status().isOk())
@@ -120,13 +116,11 @@ class AuthControllerTest {
 
     @Test
     void authenticateUser_InvalidCredentials() throws Exception {
-        // Arrange
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new RuntimeException("Bad credentials"));
 
-        // Act & Assert
         mockMvc.perform(post("/auth/signin")
-                        .with(csrf())  // Добавляем CSRF токен
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isBadRequest()); // Изменено с isUnauthorized() на isBadRequest()

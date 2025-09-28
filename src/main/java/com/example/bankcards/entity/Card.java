@@ -67,15 +67,15 @@ public class Card {
 
     public String getMaskedCardNumber() {
         try {
-            String decrypted = getCardNumber(); // пробуем получить полный номер
+            String decrypted = getCardNumber();
             if (decrypted == null || decrypted.length() < 4) {
                 return "**** **** **** ****";
             }
-            // Маскируем: оставляем только последние 4 цифры
+
             String lastFour = decrypted.substring(decrypted.length() - 4);
             return "**** **** **** " + lastFour + "  full number from transfer: " + decrypted;
         } catch (Exception e) {
-            // Если дешифровка не удалась, возвращаем полную маску
+
             return "**** **** **** ****";
         }
     }
@@ -112,7 +112,7 @@ public class Card {
         if (status == null) {
             status = CardStatus.ACTIVE;
         }
-        // Шифруем данные перед сохранением
+
         if (decryptedCardNumber != null) {
             setCardNumber(decryptedCardNumber);
         }

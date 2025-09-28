@@ -111,7 +111,6 @@ public class UserServiceImpl implements UserService {
         dto.setCreatedAt(user.getCreatedAt());
         dto.setRoles(user.getRoles());
 
-        // Конвертируем счета с картами
         if (user.getAccounts() != null) {
             dto.setAccounts(user.getAccounts().stream()
                     .map(account -> {

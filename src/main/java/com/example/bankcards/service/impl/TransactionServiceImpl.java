@@ -208,14 +208,11 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionDto cardToAccountTransfer(CardToAccountTransferRequest request) {
 
 
-        // Получаем карту отправителя
         Card fromCard = cardRepository.findById(request.getFromCardId())
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getFromCardId()));
 
-        // Проверяем доступ к карте
         securityService.checkCardAccess(request.getFromCardId());
 
-        // Получаем счет получателя по номеру
         Account toAccount = accountRepository.findByAccountNumber(request.getToAccountNumber())
                 .orElseThrow(() -> new AccountNotFoundException(request.getToAccountNumber()));
 

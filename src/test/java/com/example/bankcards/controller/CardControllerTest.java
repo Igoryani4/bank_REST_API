@@ -81,7 +81,6 @@ class CardControllerTest {
         cardDto.setAccountNumber("1234567890");
         cardDto.setBalance(BigDecimal.valueOf(500.0));
 
-        // Для тестов блокировки карты
         blockedCard = new Card();
         blockedCard.setId(1L);
         blockedCard.setCardNumber("4111111111111111");
@@ -115,7 +114,6 @@ class CardControllerTest {
         when(cardService.createCard(any(Card.class))).thenReturn(card);
         when(cardService.convertToDto(any(Card.class))).thenReturn(cardDto);
 
-        // Минимальный JSON для создания карты
         String cardJson = """
         {
             "cardNumber": "4111111111111111",
@@ -141,7 +139,6 @@ class CardControllerTest {
     void getMyCards_Success() throws Exception {
         when(securityService.getCurrentUserId()).thenReturn(1L);
 
-        // Создаем Pageable с корректными параметрами
         PageRequest pageRequest = PageRequest.of(0, 10);
         Page<CardDto> cardPage = new PageImpl<>(Arrays.asList(cardDto), pageRequest, 1);
 
@@ -175,7 +172,6 @@ class CardControllerTest {
         when(securityService.isAdmin()).thenReturn(false);
         doNothing().when(securityService).checkCardAccess(anyLong());
 
-        // Возвращаем заблокированную карту
         when(cardService.updateCardStatus(anyLong(), eq(Card.CardStatus.BLOCKED))).thenReturn(blockedCard);
         when(cardService.convertToDto(any(Card.class))).thenReturn(blockedCardDto);
 
@@ -191,7 +187,6 @@ class CardControllerTest {
     void requestCardBlock_Success() throws Exception {
         doNothing().when(securityService).checkCardAccess(anyLong());
 
-        // Возвращаем заблокированную карту
         when(cardService.updateCardStatus(anyLong(), eq(Card.CardStatus.BLOCKED))).thenReturn(blockedCard);
         when(cardService.convertToDto(any(Card.class))).thenReturn(blockedCardDto);
 

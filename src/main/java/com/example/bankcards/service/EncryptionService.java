@@ -88,7 +88,7 @@ public class EncryptionService {
 
     private byte[] normalizeKey(String key) {
         byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
-        final int REQUIRED_LENGTH = 32; // 32 байта для AES-256
+        final int REQUIRED_LENGTH = 32;
 
         if (keyBytes.length == REQUIRED_LENGTH) {
             return keyBytes;
@@ -121,30 +121,11 @@ public class EncryptionService {
         }
     }
 
-    public boolean testEncryption() {
-        try {
-            String testData = "1234567890123456"; // тестовые данные карты
-            String encrypted = encrypt(testData);
-            String decrypted = decrypt(encrypted);
-            boolean success = testData.equals(decrypted);
-            log.info("Encryption test: {}", success ? "PASSED" : "FAILED");
 
-            if (success) {
-                log.info("Sample encrypted value: {}", encrypted);
-            }
-
-            return success;
-        } catch (Exception e) {
-            log.error("Encryption test failed", e);
-            return false;
-        }
-    }
-
-    // Дополнительный метод для проверки совместимости с существующими данными
     public boolean canDecryptExisting(String existingEncryptedData) {
         try {
             String decrypted = decrypt(existingEncryptedData);
-            return decrypted != null && decrypted.matches("\\d+"); // Проверяем, что это числа (номер карты/CVV)
+            return decrypted != null && decrypted.matches("\\d+");
         } catch (Exception e) {
             log.debug("Cannot decrypt existing data: {}", e.getMessage());
             return false;

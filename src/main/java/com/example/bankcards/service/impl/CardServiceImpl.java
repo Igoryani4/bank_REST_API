@@ -120,7 +120,7 @@ public class CardServiceImpl implements CardService {
         return cards.map(this::convertToDto);
     }
 
-    @Scheduled(cron = "0 0 0 * * ?") // Ежедневно в полночь
+    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void updateExpiredCards() {
         List<Card> expiredCards = cardRepository.findExpiredActiveCards();

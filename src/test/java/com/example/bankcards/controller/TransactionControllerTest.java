@@ -133,7 +133,6 @@ class TransactionControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getCardTransactions_Success() throws Exception {
-        // Создаем мок карты и аккаунта
         Card card = mock(Card.class);
         Account account = mock(Account.class);
 
@@ -146,7 +145,7 @@ class TransactionControllerTest {
 
         List<TransactionDto> transactions = Arrays.asList(transactionDto);
 
-        // Используем существующий метод getAccountTransactions
+
         when(transactionService.getAccountTransactions(anyString())).thenReturn(transactions);
 
         mockMvc.perform(get("/transactions/admin/card/1"))

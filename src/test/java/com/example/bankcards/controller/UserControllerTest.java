@@ -18,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -81,11 +81,9 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "testuser", roles = "USER")
     void getMyProfile_Success() throws Exception {
-        // Arrange
         when(securityService.getCurrentUserId()).thenReturn(1L);
         when(userService.getUserById(anyLong())).thenReturn(user);
 
-        // Act & Assert
         mockMvc.perform(get("/users/my-profile")
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -97,12 +95,10 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getUserById_AdminAccess_Success() throws Exception {
-        // Arrange
         when(securityService.isAdmin()).thenReturn(true);
         doNothing().when(securityService).checkUserAccess(anyLong());
         when(userService.getUserById(anyLong())).thenReturn(user);
 
-        // Act & Assert
         mockMvc.perform(get("/users/1/with-accounts")
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -112,12 +108,10 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getUserWithCards_Success() throws Exception {
-        // Arrange
         when(securityService.isAdmin()).thenReturn(true);
         doNothing().when(securityService).checkUserAccess(anyLong());
         when(userService.getUserWithCards(anyLong())).thenReturn(userDto);
 
-        // Act & Assert
         mockMvc.perform(get("/users/1/with-cards")
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -128,7 +122,6 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_AdminAccess_Success() throws Exception {
-        // Arrange
         User updatedUser = User.builder()
                 .id(1L)
                 .username("testuser")
@@ -140,7 +133,6 @@ class UserControllerTest {
         doNothing().when(securityService).checkAdminAccess();
         when(userService.updateUser(anyLong(), any(UserUpdateDto.class))).thenReturn(updatedUser);
 
-        // Act & Assert
         mockMvc.perform(put("/users/1")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -153,12 +145,10 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllUsersWithCards_AdminAccess_Success() throws Exception {
-        // Arrange
         doNothing().when(securityService).checkAdminAccess();
-        List<UserDto> users = Arrays.asList(userDto);
+        List<UserDto> users = Collections.singletonList(userDto);
         when(userService.getAllUsersWithCards()).thenReturn(users);
 
-        // Act & Assert
         mockMvc.perform(get("/users/with-cards")
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -169,11 +159,9 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_AdminAccess_Success() throws Exception {
-        // Arrange
         doNothing().when(securityService).checkAdminAccess();
         doNothing().when(userService).deleteUser(anyLong());
 
-        // Act & Assert
         mockMvc.perform(delete("/users/1")
                         .with(csrf()))
                 .andExpect(status().isOk());
