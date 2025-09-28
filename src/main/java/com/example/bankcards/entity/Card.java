@@ -131,6 +131,10 @@ public class Card {
         }
     }
 
+    public void setMaskedCardNumber(String s) {
+        this.encryptedCardNumber = s;
+    }
+
     public enum CardType {
         DEBIT, CREDIT
     }

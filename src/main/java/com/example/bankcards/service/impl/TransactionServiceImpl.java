@@ -80,6 +80,9 @@ public class TransactionServiceImpl implements TransactionService {
 
             return convertToDto(savedTransaction);
 
+        } catch (AccountNotFoundException | InsufficientFundsException | TransferValidationException e) {
+            log.error("Transfer failed for user {}: {}", currentUserId, e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("Transfer failed for user {}: {}", currentUserId, e.getMessage());
             throw new RuntimeException("Transfer failed: " + e.getMessage(), e);
